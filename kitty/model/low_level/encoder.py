@@ -35,7 +35,6 @@ There are four families of encoders:
     Those encoders are also refferred to as Float Encoders
 '''
 import sys
-import six
 from struct import pack
 from binascii import hexlify
 from base64 import b64encode
@@ -48,8 +47,8 @@ def strToBytes(value):
     :type value: ``str``
     :param value: value to encode
     '''
-    kassert.is_of_types(value, (bytes, bytearray, six.string_types))
-    if isinstance(value, six.string_types):
+    kassert.is_of_types(value, (bytes, bytearray, str))
+    if isinstance(value, str):
         return bytes(bytearray([ord(x) for x in value]))
     elif isinstance(value, bytearray):
         return bytes(value)
@@ -141,10 +140,7 @@ class StrEncodeEncoder(StrFuncEncoder):
         elif encoding == 'bytes':
             func = strToBytes
         elif isinstance(encoding, str):
-            if sys.version_info < (3, 0):
-                func = py2_str_encoder_func(encoding)
-            else:
-                raise KittyException('Kitty does not support encoding "%s" on python3' % encoding)
+            func = lambda x, enc=encoding: x.decode('latin-1').encode(enc) if isinstance(x, bytes) else x.encode(enc)
         else:
             func = encoding
         super(StrEncodeEncoder, self).__init__(func)

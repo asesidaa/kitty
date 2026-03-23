@@ -19,13 +19,11 @@
 RPC implementation, based on jsonrpc
 https://json-rpc.readthedocs.io/
 '''
-import requests
+import codecs
 import json
-import six
+import requests
 import traceback
-from six.moves.BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-if six.PY3:
-    import codecs
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 
 JSONRPC_NO_RESULT_STR = u'No result from JSON-RPC method.'
@@ -44,12 +42,9 @@ def encode_string(data, encoding='hex'):
     :param encoding: encoding to use (default: 'hex')
     :return: encoded string
     '''
-    if six.PY2:
-        return data.encode(encoding)
-    else:
-        if isinstance(data, str):
-            data = bytes(data, 'utf-8')
-        return codecs.encode(data, encoding).decode('ascii')
+    if isinstance(data, str):
+        data = bytes(data, 'utf-8')
+    return codecs.encode(data, encoding).decode('ascii')
 
 
 def decode_string(data, encoding='hex'):
@@ -60,22 +55,25 @@ def decode_string(data, encoding='hex'):
     :param encoding: encoding to use (default: 'hex')
     :return: decoded string
     '''
-    if six.PY2:
-        return data.decode(encoding)
-    else:
-        return codecs.decode(data.encode('ascii'), encoding)
+    return codecs.decode(data.encode('ascii'), encoding)
 
 
 def encode_data(data):
     '''
     Encode data - list, dict, string, bool or int (and nested)
 
+    In Python 3, str and bytes are distinct types. We tag them so
+    decode_data can reconstruct the correct type after round-tripping
+    through JSON (which only has one string type).
+
     :param data: data to encode
     :return: encoded object of the same type
     '''
-    if isinstance(data, (six.string_types, bytes)):
-        return encode_string(data)
-    elif isinstance(data, (six.integer_types, bool, float)):
+    if isinstance(data, str):
+        return {'__t': 's', '__v': encode_string(data)}
+    elif isinstance(data, bytes):
+        return {'__t': 'b', '__v': encode_string(data)}
+    elif isinstance(data, (int, bool, float)):
         return data
     elif data is None:
         return data
@@ -94,9 +92,14 @@ def decode_data(data):
     :param data: data to decode
     :return: decoded object of the same type
     '''
-    if isinstance(data, (six.string_types, bytes)):
+    if isinstance(data, dict) and '__t' in data and '__v' in data:
+        raw = decode_string(data['__v'])  # returns bytes
+        if data['__t'] == 's':
+            return raw.decode('utf-8')
+        return raw  # bytes
+    elif isinstance(data, (str, bytes)):
         return decode_string(data)
-    elif isinstance(data, (six.integer_types, bool, float)):
+    elif isinstance(data, (int, bool, float)):
         return data
     elif data is None:
         return data

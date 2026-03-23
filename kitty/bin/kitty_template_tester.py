@@ -34,7 +34,7 @@ import os
 import sys
 import traceback
 import docopt
-from pkg_resources import get_distribution
+from importlib.metadata import version as _get_pkg_version
 from kitty.model import Template
 
 
@@ -159,7 +159,7 @@ def process_file(f, processor):
 
 
 def _main():
-    print('kitty version: %s' % get_distribution('kittyfuzzer').version)
+    print('kitty version: %s' % _get_pkg_version('kittyfuzzer'))
     opts = docopt.docopt(__doc__)
     files = opts['<FILE>']
     fast = opts['--fast']

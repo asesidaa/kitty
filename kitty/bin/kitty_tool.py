@@ -50,7 +50,7 @@ import os
 import sys
 import types
 import logging
-from pkg_resources import get_distribution
+from importlib.metadata import version as _get_pkg_version
 from json import dumps
 import docopt
 import traceback
@@ -216,7 +216,7 @@ class ListHandler(Handler):
 
 
 def _main():
-    opts = docopt.docopt(__doc__, version=get_distribution('kittyfuzzer').version)
+    opts = docopt.docopt(__doc__, version=_get_pkg_version('kittyfuzzer'))
     logger = get_logger(opts)
     try:
         if opts['generate'] or opts['list']:

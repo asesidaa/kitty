@@ -20,7 +20,6 @@ This module defines the :class:`~kitty.data.report.Report` class
 from base64 import b64decode
 from binascii import unhexlify
 import codecs
-import six
 from kitty.model.low_level.encoder import StrEncodeEncoder
 
 
@@ -162,6 +161,15 @@ class Report(object):
             return self._sub_reports[key]
         return None
 
+    def _encode_value(self, v, encoder):
+        if isinstance(v, (bytes, bytearray, str)):
+            return encoder.encode(v).tobytes().decode()
+        elif isinstance(v, dict):
+            return {dk: self._encode_value(dv, encoder) for dk, dv in v.items()}
+        elif isinstance(v, (list, tuple)):
+            return [self._encode_value(item, encoder) for item in v]
+        return v
+
     def to_dict(self, encoding='base64'):
         '''
         Return a dictionary version of the report
@@ -171,17 +179,16 @@ class Report(object):
         :return: dictionary representation of the report
         '''
         res = {}
+        encoder = StrEncodeEncoder(encoding)
         for k, v in self._data_fields.items():
-            if isinstance(v, (bytes, bytearray, six.string_types)):
-                v = StrEncodeEncoder(encoding).encode(v).tobytes().decode()
-            res[k] = v
+            res[k] = self._encode_value(v, encoder)
         for k, v in self._sub_reports.items():
             res[k] = v.to_dict(encoding)
         return res
 
     @classmethod
     def _decode(cls, val, encoding):
-        if isinstance(val, six.string_types):
+        if isinstance(val, str):
             if encoding == 'hex':
                 val = unhexlify(val).decode()
             elif encoding == 'base64':

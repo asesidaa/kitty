@@ -29,7 +29,7 @@ import shlex
 from binascii import hexlify
 from threading import Event
 import docopt
-from pkg_resources import get_distribution
+from importlib.metadata import version as _get_pkg_version
 from kitty.core import KittyException, KittyObject
 from kitty.data.data_manager import DataManager, SessionInfo
 from kitty.data.report import Report
@@ -64,7 +64,7 @@ def _get_current_version():
     # This is weird. I know that this is the way to get the version,
     # yet for some reason pylint complains about it.
     #
-    current_version = get_distribution(package_name).version  # pylint: disable=maybe-no-member
+    current_version = _get_pkg_version(package_name)
     return current_version
 
 

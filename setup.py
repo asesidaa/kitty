@@ -22,7 +22,7 @@ setup(
     author_email=EMAIL,
     url=URL,
     packages=find_packages(),
-    install_requires=['docopt', 'bitstring', 'six', 'requests'],
+    install_requires=['docopt', 'bitstring', 'requests'],
     keywords=KEYWORDS,
     entry_points={
         'console_scripts': [
